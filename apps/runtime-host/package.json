@@ -1,0 +1,21 @@
+{
+  "name": "@ai-platform/runtime-host",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ai-platform/runtime-client": "workspace:*",
+    "@ai-platform/runtime-contract": "workspace:*"
+  },
+  "devDependencies": {
+    "jsdom": "^27.0.1",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.7",
+    "vitest": "^3.2.4"
+  }
+}
