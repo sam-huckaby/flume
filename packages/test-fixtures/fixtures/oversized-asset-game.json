@@ -1,0 +1,8 @@
+{
+  "id": "oversized-asset-game",
+  "asset": {
+    "path": "assets/huge.bin",
+    "sizeBytes": 20971520,
+    "allowedLimitBytes": 5242880
+  }
+}
