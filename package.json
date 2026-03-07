@@ -1,0 +1,24 @@
+{
+  "name": "ai-game-platform",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.26.0",
+  "scripts": {
+    "dev": "turbo dev --parallel",
+    "build": "turbo build",
+    "test": "turbo test",
+    "test:e2e": "playwright test",
+    "lint": "turbo lint",
+    "db:migrate": "pnpm --filter @ai-platform/database db:migrate",
+    "db:seed": "pnpm --filter @ai-platform/database db:seed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.53.1",
+    "@types/node": "^24.7.2",
+    "@types/pg": "^8.15.6",
+    "@types/semver": "^7.7.1",
+    "turbo": "^2.5.8",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}
