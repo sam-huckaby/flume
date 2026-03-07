@@ -1,6 +1,6 @@
-# AI Game Platform MVP
+# Flume — AI Game Platform MVP
 
-An MVP platform for **SDK-compiled AI browser games** with a strict runtime contract, validation pipeline, moderation flow, and isolated runtime host model.
+**Flume** is an MVP platform for **SDK-compiled AI browser games** with a strict runtime contract, validation pipeline, moderation flow, and isolated runtime host model.
 
 ## Core principles
 
