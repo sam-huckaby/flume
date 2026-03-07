@@ -1,0 +1,20 @@
+{
+  "name": "@ai-platform/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --import tsx src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ai-platform/database": "workspace:*",
+    "@ai-platform/runtime-client": "workspace:*",
+    "@ai-platform/runtime-contract": "workspace:*",
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.6"
+  }
+}
