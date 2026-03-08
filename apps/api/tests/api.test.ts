@@ -37,6 +37,39 @@ describe("API routes", () => {
     return parsed.sessionId as string;
   }
 
+  function createPublishedArtifactVersion() {
+    const owner = app.ctx.db.createUser({
+      email: "seed-dev@test.local",
+      username: "seed-dev",
+      passwordHash: "hash",
+      role: "developer"
+    });
+    const game = app.ctx.db.createGame({
+      ownerUserId: owner.id,
+      slug: "the-button",
+      title: "The Button",
+      shortDescription: "SDK example game",
+      description: "Seeded local demo game",
+      genre: "arcade",
+      visibility: "public",
+      status: "active"
+    });
+    const version = app.ctx.db.createGameVersion({
+      gameId: game.id,
+      version: "1.0.0",
+      manifestJson: { id: "example-the-button" },
+      sdkVersion: "1.0.0",
+      runtimeVersionRange: ">=1.0.0",
+      createdByUserId: owner.id,
+      validationStatus: "passed",
+      smokeTestStatus: "passed",
+      reviewState: "approved",
+      publishState: "published",
+      artifactStorageKey: "packages/sdk/example/the-button-game/artifact-root"
+    });
+    return { game, version };
+  }
+
   it("supports login success and failure", async () => {
     await app.inject({
       method: "POST",
@@ -205,5 +238,62 @@ describe("API routes", () => {
       payload: { exitReason: "player_exit" }
     });
     expect(end.statusCode).toBe(200);
+  });
+
+  it("returns an artifact bootstrap URL and serves published artifact files with CORS", async () => {
+    const playerSession = await registerAndLogin("player-artifact@test.local", "player");
+    const { version } = createPublishedArtifactVersion();
+
+    const sessionResponse = await app.inject({
+      method: "POST",
+      url: "/play-sessions",
+      headers: {
+        "x-session-id": playerSession,
+        host: "localhost:4000"
+      },
+      payload: {
+        gameVersionId: version.id,
+        runtimeVersion: "1.0.0"
+      }
+    });
+
+    expect(sessionResponse.statusCode).toBe(201);
+    expect(sessionResponse.json().bootstrap.artifactBaseUrl).toBe(`http://localhost:4000/versions/${version.id}/artifact`);
+
+    const preflight = await app.inject({
+      method: "OPTIONS",
+      url: "/telemetry/events",
+      headers: {
+        origin: "http://localhost:3001",
+        "access-control-request-method": "POST",
+        "access-control-request-headers": "content-type,x-session-token"
+      }
+    });
+
+    expect(preflight.statusCode).toBe(204);
+    expect(preflight.headers["access-control-allow-origin"]).toBe("http://localhost:3001");
+
+    const manifest = await app.inject({
+      method: "GET",
+      url: `/versions/${version.id}/artifact/manifest.json`,
+      headers: {
+        origin: "http://localhost:3001"
+      }
+    });
+
+    expect(manifest.statusCode).toBe(200);
+    expect(manifest.headers["access-control-allow-origin"]).toBe("http://localhost:3001");
+    expect(manifest.json()).toMatchObject({ id: "example-the-button", title: "The Button" });
+  });
+
+  it("rejects artifact path traversal requests", async () => {
+    const { version } = createPublishedArtifactVersion();
+
+    const manifest = await app.inject({
+      method: "GET",
+      url: `/versions/${version.id}/artifact/..%2Fmanifest.json`
+    });
+
+    expect(manifest.statusCode).toBe(400);
   });
 });

@@ -27,7 +27,11 @@ async function getPlayableVersion(slug: string) {
   if (!playSessionResponse.ok) {
     return null;
   }
-  const playSession = (await playSessionResponse.json()) as { session: { id: string }; sessionToken: string };
+  const playSession = (await playSessionResponse.json()) as {
+    session: { id: string };
+    sessionToken: string;
+    bootstrap: { artifactBaseUrl: string };
+  };
   return {
     game: gameJson.game,
     version: published,
@@ -42,11 +46,9 @@ export default async function PlayPage({ params }: { params: Promise<{ slug: str
     return <p>Unable to launch this game right now.</p>;
   }
   const runtimeHost = process.env.NEXT_PUBLIC_RUNTIME_HOST_URL ?? "http://localhost:3001";
-  const artifactBaseUrl =
-    process.env.NEXT_PUBLIC_ARTIFACT_BASE_URL ?? "http://localhost:4000/artifacts/minimal-valid-game";
   const src = `${runtimeHost}?sessionId=${encodeURIComponent(result.playSession.session.id)}&sessionToken=${encodeURIComponent(
     result.playSession.sessionToken
-  )}&artifactBaseUrl=${encodeURIComponent(artifactBaseUrl)}&apiBaseUrl=${encodeURIComponent(
+  )}&artifactBaseUrl=${encodeURIComponent(result.playSession.bootstrap.artifactBaseUrl)}&apiBaseUrl=${encodeURIComponent(
     process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000"
   )}&runtimeVersion=1.0.0`;
 
