@@ -43,7 +43,14 @@ export default async function PlayPage({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const result = await getPlayableVersion(slug);
   if (!result) {
-    return <p>Unable to launch this game right now.</p>;
+    return (
+      <section className="page-stack">
+        <article className="empty-panel">
+          <h1 className="page-title">Unable to launch this game right now.</h1>
+          <p className="section-copy">There is no published version ready for a runtime session yet.</p>
+        </article>
+      </section>
+    );
   }
   const runtimeHost = process.env.NEXT_PUBLIC_RUNTIME_HOST_URL ?? "http://localhost:3001";
   const src = `${runtimeHost}?sessionId=${encodeURIComponent(result.playSession.session.id)}&sessionToken=${encodeURIComponent(
@@ -53,15 +60,31 @@ export default async function PlayPage({ params }: { params: Promise<{ slug: str
   )}&runtimeVersion=1.0.0`;
 
   return (
-    <section>
-      <h1>Playing: {result.game.title}</h1>
-      <iframe
-        src={src}
-        title="Runtime Host"
-        width={960}
-        height={640}
-        style={{ border: "1px solid #2a3553", background: "#000" }}
-      />
+    <section className="page-stack">
+      <div className="hero-panel hero-grid">
+        <div className="section-header">
+          <p className="eyebrow">Runtime launch</p>
+          <h1 className="page-title">Playing: {result.game.title}</h1>
+          <p className="section-copy">
+            Flume creates a fresh play session, hands runtime configuration to the host, and opens the published version
+            directly in the browser.
+          </p>
+          <div className="badge-row">
+            <span className="chip chip--success">Session {result.playSession.session.id}</span>
+            <span className="chip">Version {result.version.version}</span>
+          </div>
+        </div>
+        <article className="surface-panel">
+          <ul className="detail-list">
+            <li>Runtime host URL is supplied by environment configuration.</li>
+            <li>Artifact base URL and session token are encoded into the launch request.</li>
+            <li>Only published versions are eligible for play.</li>
+          </ul>
+        </article>
+      </div>
+      <div className="iframe-shell">
+        <iframe className="runtime-frame" src={src} title="Runtime Host" />
+      </div>
     </section>
   );
 }

@@ -16,13 +16,47 @@ export default async function GameDetailPage({ params }: { params: Promise<{ slu
   const { slug } = await params;
   const game = await fetchGame(slug);
   if (!game) {
-    return <p>Game not found.</p>;
+    return (
+      <section className="page-stack">
+        <article className="empty-panel">
+          <h1 className="page-title">Game not found.</h1>
+          <p className="section-copy">This slug is not currently available in the published catalog.</p>
+          <Link className="button-secondary" href="/games">
+            Return to games
+          </Link>
+        </article>
+      </section>
+    );
   }
+
   return (
-    <section>
-      <h1>{game.title}</h1>
-      <p>{game.description}</p>
-      <Link href={`/play/${game.slug}`}>Launch game</Link>
+    <section className="page-stack">
+      <div className="hero-panel hero-grid">
+        <div className="section-header">
+          <p className="eyebrow">Published game</p>
+          <h1 className="page-title">{game.title}</h1>
+          <p className="section-copy">{game.description}</p>
+          <div className="action-row">
+            <Link className="button-primary" href={`/play/${game.slug}`}>
+              Launch game
+            </Link>
+            <Link className="button-secondary" href="/games">
+              Back to library
+            </Link>
+          </div>
+        </div>
+        <article className="surface-panel">
+          <div className="badge-row">
+            <span className="chip chip--success">Launchable</span>
+            <span className="chip">{game.slug}</span>
+          </div>
+          <ul className="detail-list">
+            <li>Loads through the runtime host with a fresh play session.</li>
+            <li>Published versions are selected automatically before launch.</li>
+            <li>Players stay inside the browser without additional install steps.</li>
+          </ul>
+        </article>
+      </div>
     </section>
   );
 }
