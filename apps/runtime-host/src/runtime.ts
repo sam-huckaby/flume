@@ -43,14 +43,24 @@ export async function bootstrapRuntime(
     });
 
   const publishTelemetry = async (event: TelemetryEvent): Promise<void> => {
-    await fetchFn(`${bootstrap.apiBaseUrl}/telemetry/events`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-session-token": bootstrap.sessionToken
-      },
-      body: JSON.stringify(event)
-    });
+    try {
+      const response = await fetchFn(`${bootstrap.apiBaseUrl}/telemetry/events`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-session-token": bootstrap.sessionToken
+        },
+        body: JSON.stringify(event)
+      });
+      if (!response.ok) {
+        console.warn("[runtime] telemetry delivery failed", { event: event.name, status: response.status });
+      }
+    } catch (error) {
+      console.warn("[runtime] telemetry delivery failed", {
+        event: event.name,
+        message: error instanceof Error ? error.message : "unknown"
+      });
+    }
   };
 
   const emit = (name: TelemetryEvent["name"], payload?: Record<string, unknown>) => {

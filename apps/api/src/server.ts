@@ -1,5 +1,8 @@
 import { createHash, randomBytes } from "node:crypto";
-import Fastify, { type FastifyInstance, type FastifyRequest } from "fastify";
+import { readFile } from "node:fs/promises";
+import { extname, isAbsolute, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from "fastify";
 import {
   InMemorySessionStore,
   hashPassword,
@@ -15,6 +18,18 @@ import { ZodError, z } from "zod";
 const logger = createLogger("api");
 const MAX_SAVE_STATE_BYTES = 64 * 1024;
 const MAX_TELEMETRY_PAYLOAD_BYTES = 16 * 1024;
+const WORKSPACE_ROOT = fileURLToPath(new URL("../../..", import.meta.url));
+const DEFAULT_PUBLIC_API_BASE_URL = process.env.PUBLIC_API_BASE_URL ?? "http://localhost:4000";
+const ALLOWED_CORS_ORIGINS = new Set(
+  [
+    process.env.NEXT_PUBLIC_RUNTIME_HOST_URL,
+    process.env.RUNTIME_HOST_ORIGIN,
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+  ].filter((value): value is string => typeof value === "string" && value.length > 0)
+);
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -79,6 +94,74 @@ function serializeSize(value: unknown): number {
   return new TextEncoder().encode(JSON.stringify(value)).length;
 }
 
+function isPathInside(root: string, target: string): boolean {
+  const relPath = relative(root, target);
+  return relPath === "" || (!relPath.startsWith("..") && !isAbsolute(relPath));
+}
+
+function getApiBaseUrl(request: FastifyRequest): string {
+  const hostHeader = request.headers["x-forwarded-host"] ?? request.headers.host;
+  const host = Array.isArray(hostHeader) ? hostHeader[0] : hostHeader;
+  const protoHeader = request.headers["x-forwarded-proto"];
+  const protocol = (Array.isArray(protoHeader) ? protoHeader[0] : protoHeader)?.split(",")[0] ?? "http";
+  return host ? `${protocol}://${host}` : DEFAULT_PUBLIC_API_BASE_URL;
+}
+
+function applyCorsHeaders(request: FastifyRequest, reply: FastifyReply): void {
+  const originHeader = request.headers.origin;
+  const origin = Array.isArray(originHeader) ? originHeader[0] : originHeader;
+  if (!origin || !ALLOWED_CORS_ORIGINS.has(origin)) {
+    return;
+  }
+  reply.header("Access-Control-Allow-Origin", origin);
+  reply.header("Access-Control-Allow-Headers", "Content-Type, x-session-id, x-session-token");
+  reply.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, OPTIONS");
+  reply.header("Vary", "Origin");
+}
+
+function resolveArtifactRoot(artifactStorageKey: string): string | null {
+  const artifactRoot = resolve(WORKSPACE_ROOT, artifactStorageKey);
+  return isPathInside(WORKSPACE_ROOT, artifactRoot) ? artifactRoot : null;
+}
+
+function resolveArtifactFilePath(artifactStorageKey: string, artifactPath: string): string | null {
+  const artifactRoot = resolveArtifactRoot(artifactStorageKey);
+  if (!artifactRoot) {
+    return null;
+  }
+  const requestPath = artifactPath.replace(/^[/\\]+/, "");
+  const filePath = resolve(artifactRoot, requestPath);
+  return isPathInside(artifactRoot, filePath) ? filePath : null;
+}
+
+function getContentType(filePath: string): string {
+  switch (extname(filePath).toLowerCase()) {
+    case ".json":
+      return "application/json; charset=utf-8";
+    case ".js":
+    case ".mjs":
+    case ".cjs":
+      return "application/javascript; charset=utf-8";
+    case ".png":
+      return "image/png";
+    case ".jpg":
+    case ".jpeg":
+      return "image/jpeg";
+    case ".gif":
+      return "image/gif";
+    case ".webp":
+      return "image/webp";
+    case ".mp3":
+      return "audio/mpeg";
+    case ".wav":
+      return "audio/wav";
+    case ".txt":
+      return "text/plain; charset=utf-8";
+    default:
+      return "application/octet-stream";
+  }
+}
+
 function getAuthUser(ctx: ApiContext, request: FastifyRequest): AuthUser | null {
   const sessionId = request.headers["x-session-id"];
   if (!sessionId || Array.isArray(sessionId)) {
@@ -130,6 +213,12 @@ export function createApiServer(context?: Partial<ApiContext>): FastifyInstance 
   };
 
   app.decorate("ctx", ctx);
+  app.addHook("onRequest", async (request, reply) => {
+    applyCorsHeaders(request, reply);
+    if (request.method === "OPTIONS") {
+      return reply.status(204).send();
+    }
+  });
   app.setErrorHandler((error, _request, reply) => {
     const message = error instanceof Error ? error.message : "unknown";
     if (error instanceof ZodError) {
@@ -275,6 +364,34 @@ export function createApiServer(context?: Partial<ApiContext>): FastifyInstance 
     return { version };
   });
 
+  app.get("/versions/:versionId/artifact/*", async (request, reply) => {
+    const params = request.params as { versionId: string; "*": string };
+    const version = ctx.db.getVersion(params.versionId);
+    if (
+      !version ||
+      version.publishState !== "published" ||
+      version.validationStatus !== "passed" ||
+      version.smokeTestStatus !== "passed" ||
+      !version.artifactStorageKey
+    ) {
+      return reply.status(404).send({ error: "Artifact not available" });
+    }
+
+    const filePath = resolveArtifactFilePath(version.artifactStorageKey, params["*"] ?? "");
+    if (!filePath) {
+      return reply.status(400).send({ error: "Invalid artifact path" });
+    }
+
+    try {
+      const file = await readFile(filePath);
+      reply.header("Cache-Control", "no-store");
+      reply.type(getContentType(filePath));
+      return reply.send(file);
+    } catch {
+      return reply.status(404).send({ error: "Artifact file not found" });
+    }
+  });
+
   app.post("/versions/:versionId/upload", async (request, reply) => {
     const user = getAuthUser(ctx, request);
     requireRole(user, ["developer", "admin"]);
@@ -363,7 +480,8 @@ export function createApiServer(context?: Partial<ApiContext>): FastifyInstance 
       sessionToken,
       bootstrap: {
         sessionId: playSession.id,
-        gameVersionId: body.gameVersionId
+        gameVersionId: body.gameVersionId,
+        artifactBaseUrl: `${getApiBaseUrl(request)}/versions/${version.id}/artifact`
       }
     });
   });

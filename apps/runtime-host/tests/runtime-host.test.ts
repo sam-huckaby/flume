@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { bootstrapRuntime } from "../src/runtime.js";
 
 const baseManifest = {
@@ -27,6 +27,10 @@ function createBootstrap() {
 }
 
 describe("runtime host bootstrap", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("boots with valid session and game", async () => {
     const mount = document.createElement("div");
     Object.defineProperty(mount, "clientWidth", { value: 400 });
@@ -128,5 +132,60 @@ describe("runtime host bootstrap", () => {
     window.dispatchEvent(new Event("resize"));
     expect(resize).toHaveBeenCalled();
     await runtime.dispose();
+  });
+
+  it("treats telemetry transport failures as non-fatal", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const mount = document.createElement("div");
+    Object.defineProperty(mount, "clientWidth", { value: 320 });
+    Object.defineProperty(mount, "clientHeight", { value: 240 });
+    const fetchFn = vi.fn(async (url: string) => {
+      if (url.endsWith("/telemetry/events")) {
+        throw new Error("network down");
+      }
+      if (url.endsWith("/manifest.json")) {
+        return {
+          ok: true,
+          json: async () => baseManifest
+        } as Response;
+      }
+      return { ok: true, json: async () => ({}) } as Response;
+    });
+
+    const runtime = await bootstrapRuntime(createBootstrap(), mount, {
+      fetchFn: fetchFn as unknown as typeof fetch,
+      importModule: async () => ({
+        default: {
+          manifest: baseManifest,
+          init() {},
+          start() {},
+          dispose() {}
+        }
+      })
+    });
+
+    expect(runtime.controller.getState()).toBe("running");
+    await runtime.dispose();
+    expect(warnSpy).toHaveBeenCalled();
+  });
+
+  it("fails when manifest fetch returns not found", async () => {
+    const mount = document.createElement("div");
+    const fetchFn = vi.fn(async (url: string) => {
+      if (url.endsWith("/manifest.json")) {
+        return {
+          ok: false,
+          status: 404
+        } as Response;
+      }
+      return { ok: true, json: async () => ({ accepted: true }) } as Response;
+    });
+
+    await expect(
+      bootstrapRuntime(createBootstrap(), mount, {
+        fetchFn: fetchFn as unknown as typeof fetch,
+        importModule: async () => ({ default: {} })
+      })
+    ).rejects.toThrow(/failed to fetch manifest \(404\)/i);
   });
 });
