@@ -3,8 +3,8 @@ import Link from "next/link";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "AI Game Platform",
-  description: "MVP platform for SDK-compiled AI browser games"
+  title: "Flume",
+  description: "Flume platform for SDK-compiled AI browser games"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

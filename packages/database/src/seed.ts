@@ -1,23 +1,16 @@
 import { InMemoryDatabase } from "./repositories.js";
-import { hashPassword } from "@ai-platform/auth";
+import { seedInMemoryDatabase } from "./seed-data.js";
 
 async function run(): Promise<void> {
   const db = new InMemoryDatabase();
-  db.createUser({
-    email: "moderator@local.test",
-    username: "mod",
-    passwordHash: hashPassword("password123"),
-    role: "moderator"
-  });
-  db.createUser({
-    email: "developer@local.test",
-    username: "dev",
-    passwordHash: hashPassword("password123"),
-    role: "developer"
-  });
-  console.log("Seeded in-memory demo users:");
-  console.log("- moderator@local.test / password123");
-  console.log("- developer@local.test / password123");
+  const seeded = await seedInMemoryDatabase(db);
+  console.log("Seeded in-memory demo data:");
+  console.log(`- moderator: ${seeded.users.moderator.email} / password123`);
+  console.log(`- developer: ${seeded.users.developer.email} / password123`);
+  console.log(`- player: ${seeded.users.player.email} / password123`);
+  console.log(`- game: ${seeded.game.title} (slug: ${seeded.game.slug})`);
+  console.log(`- version: ${seeded.version.version} (${seeded.version.id})`);
+  console.log(`- artifact root: ${seeded.exampleArtifactPath}`);
 }
 
 run().catch((error) => {
