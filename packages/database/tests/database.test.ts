@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { InMemoryDatabase } from "../src/repositories.js";
+import { seedInMemoryDatabase } from "../src/seed-data.js";
 
 describe("database migrations", () => {
   it("contains schema creation for required core tables", () => {
@@ -85,5 +86,16 @@ describe("repository CRUD and state transitions", () => {
     db.setReviewState(version.id, "approved");
     const published = db.setPublishState(version.id, "published");
     expect(published.publishState).toBe("published");
+  });
+
+  it("seeds SDK example game as published", async () => {
+    const db = new InMemoryDatabase();
+    const seeded = await seedInMemoryDatabase(db);
+
+    expect(seeded.game.slug).toBe("the-button");
+    expect(seeded.version.publishState).toBe("published");
+    expect(seeded.version.reviewState).toBe("approved");
+    expect(seeded.version.artifactStorageKey).toContain("packages/sdk/example/the-button-game/artifact-root");
+    expect(db.listGames().map((game) => game.slug)).toContain("the-button");
   });
 });
