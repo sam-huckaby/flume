@@ -12,6 +12,9 @@
     "db:migrate": "pnpm --filter @ai-platform/database db:migrate",
     "db:seed": "pnpm --filter @ai-platform/database db:seed"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild", "sharp"]
+  },
   "devDependencies": {
     "@playwright/test": "^1.53.1",
     "@types/node": "^24.7.2",
