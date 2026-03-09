@@ -12,17 +12,57 @@ async function fetchGames() {
 
 export default async function GamesPage() {
   const games = await fetchGames();
+
   return (
-    <section>
-      <h1>Games</h1>
-      {games.length === 0 ? <p>No published games yet.</p> : null}
-      <ul>
-        {games.map((game) => (
-          <li key={game.slug}>
-            <Link href={`/games/${game.slug}`}>{game.title}</Link> - {game.shortDescription}
-          </li>
-        ))}
-      </ul>
+    <section className="page-stack">
+      <div className="hero-panel hero-grid">
+        <div className="section-header">
+          <p className="eyebrow">Game library</p>
+          <h1 className="page-title">Browse curated releases ready for browser play.</h1>
+          <p className="section-copy">
+            Published games appear here once they complete review and move through the release pipeline.
+          </p>
+        </div>
+        <article className="surface-panel">
+          <div className="stats-grid">
+            <article className="card-panel">
+              <p className="metric-value">{games.length}</p>
+              <p className="metric-label">Published games returned</p>
+            </article>
+            <article className="card-panel">
+              <p className="metric-value">Web</p>
+              <p className="metric-label">Primary launch surface</p>
+            </article>
+            <article className="card-panel">
+              <p className="metric-value">Live</p>
+              <p className="metric-label">Catalog freshness</p>
+            </article>
+          </div>
+        </article>
+      </div>
+
+      {games.length === 0 ? (
+        <article className="empty-panel">
+          <h2 className="section-title">No published games yet.</h2>
+          <p className="section-copy">Once a version is approved and published, it will appear here for players.</p>
+        </article>
+      ) : (
+        <div className="card-grid">
+          {games.map((game) => (
+            <article className="card-panel" key={game.slug}>
+              <div className="badge-row">
+                <span className="chip chip--success">Published</span>
+                <span className="chip">{game.slug}</span>
+              </div>
+              <h2 className="card-title">{game.title}</h2>
+              <p className="card-copy">{game.shortDescription}</p>
+              <Link className="card-link" href={`/games/${game.slug}`}>
+                Open game details
+              </Link>
+            </article>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import React from "react";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Flume",
@@ -10,16 +11,37 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body style={{ fontFamily: "sans-serif", margin: 0, background: "#0b1020", color: "#e6edf7" }}>
-        <header style={{ padding: "12px 20px", borderBottom: "1px solid #2a3553" }}>
-          <nav style={{ display: "flex", gap: 16 }}>
-            <Link href="/">Home</Link>
-            <Link href="/games">Games</Link>
-            <Link href="/developer">Developer</Link>
-            <Link href="/moderator">Moderator</Link>
-          </nav>
-        </header>
-        <main style={{ padding: 20 }}>{children}</main>
+      <body>
+        <div className="shell">
+          <header className="site-header">
+            <div className="site-header__inner">
+              <Link className="brand" href="/">
+                <span aria-hidden="true" className="brand-mark">
+                  F
+                </span>
+                <span className="brand-copy">
+                  <span className="brand-title">Flume</span>
+                  <span className="brand-subtitle">Trusted release pipeline for browser AI games</span>
+                </span>
+              </Link>
+              <nav className="site-nav">
+                <Link className="nav-link" href="/">
+                  Home
+                </Link>
+                <Link className="nav-link" href="/games">
+                  Games
+                </Link>
+                <Link className="nav-link nav-link--highlight" href="/developer">
+                  Developer portal
+                </Link>
+                <Link className="nav-link" href="/moderator">
+                  Moderator
+                </Link>
+              </nav>
+            </div>
+          </header>
+          <main className="site-main">{children}</main>
+        </div>
       </body>
     </html>
   );

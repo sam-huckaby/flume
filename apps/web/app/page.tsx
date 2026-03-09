@@ -1,97 +1,88 @@
 import Link from "next/link";
 
 export default function HomePage() {
+  const featureCards = [
+    {
+      title: "Ship with confidence",
+      body: "Version every game release, capture review status, and move through a clear publish path."
+    },
+    {
+      title: "Run in a controlled host",
+      body: "Launch curated browser games with consistent runtime hand-off, session wiring, and telemetry hooks."
+    },
+    {
+      title: "Operate from one portal",
+      body: "Developers, moderators, and players share a single polished surface instead of disconnected MVP screens."
+    }
+  ];
+
   return (
-    <section
-      style={{
-        maxWidth: 980,
-        margin: "0 auto",
-        display: "grid",
-        gap: 28,
-        padding: "32px 12px 48px"
-      }}
-    >
-      <div
-        style={{
-          border: "1px solid #2a3553",
-          borderRadius: 20,
-          background:
-            "radial-gradient(circle at top left, rgba(125, 102, 255, 0.22), rgba(11, 16, 32, 0.95) 48%), #0b1020",
-          padding: "40px 32px",
-          boxShadow: "0 24px 48px rgba(3, 8, 18, 0.4)"
-        }}
-      >
-        <p style={{ margin: 0, color: "#95a1c4", fontSize: 14, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-          AI game platform
-        </p>
-        <h1 style={{ margin: "8px 0 12px", fontSize: "clamp(56px, 12vw, 120px)", lineHeight: 0.9 }}>Flume</h1>
-        <p style={{ margin: 0, maxWidth: 680, color: "#d3ddf7", fontSize: 18, lineHeight: 1.5 }}>
-          Build with the SDK, ship safely, and play instantly. Flume gives developers a streamlined pipeline and players
-          a reliable runtime for curated browser games.
-        </p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 24 }}>
-          <Link
-            href="/games"
-            style={{
-              padding: "10px 16px",
-              borderRadius: 10,
-              background: "#6f63ff",
-              color: "#ffffff",
-              textDecoration: "none",
-              fontWeight: 600
-            }}
-          >
-            Play games
-          </Link>
-          <Link
-            href="/developer"
-            style={{
-              padding: "10px 16px",
-              borderRadius: 10,
-              border: "1px solid #44527a",
-              color: "#dce6ff",
-              textDecoration: "none",
-              fontWeight: 600
-            }}
-          >
-            Developer dashboard
-          </Link>
-          <Link
-            href="/moderator"
-            style={{
-              padding: "10px 16px",
-              borderRadius: 10,
-              border: "1px solid #44527a",
-              color: "#dce6ff",
-              textDecoration: "none",
-              fontWeight: 600
-            }}
-          >
-            Moderator queue
-          </Link>
+    <section className="page-stack">
+      <div className="hero-panel hero-grid">
+        <div className="section-header">
+          <p className="eyebrow">AI game platform</p>
+          <h1 className="hero-title">Secure release flow. Instant browser play.</h1>
+          <p className="hero-copy">
+            Flume gives developers a polished portal for shipping SDK-built games, moderators a clean approval queue, and
+            players a dependable runtime hand-off.
+          </p>
+          <div className="action-row">
+            <Link className="button-primary" href="/developer">
+              Open developer portal
+            </Link>
+            <Link className="button-secondary" href="/games">
+              Browse games
+            </Link>
+            <Link className="button-ghost" href="/moderator">
+              View moderation queue
+            </Link>
+          </div>
+        </div>
+        <div className="surface-panel">
+          <div className="badge-row">
+            <span className="chip chip--success">Healthy release path</span>
+            <span className="chip chip--warm">Curated publishing</span>
+          </div>
+          <div className="stats-grid">
+            <article className="card-panel">
+              <p className="metric-value">3</p>
+              <p className="metric-label">Core surfaces unified</p>
+            </article>
+            <article className="card-panel">
+              <p className="metric-value">1</p>
+              <p className="metric-label">Modern developer portal</p>
+            </article>
+            <article className="card-panel">
+              <p className="metric-value">16.1.6</p>
+              <p className="metric-label">Pinned Next.js version</p>
+            </article>
+          </div>
+          <ul className="detail-list">
+            <li>Build and create new game records from the portal.</li>
+            <li>Prepare version payloads and submit them for review.</li>
+            <li>Launch published games into the runtime host with session context.</li>
+          </ul>
         </div>
       </div>
 
-      <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
-        {[
-          { title: "Submit", body: "Upload SDK-compiled artifacts with explicit runtime permissions." },
-          { title: "Review", body: "Moderate and publish approved versions through a clear release path." },
-          { title: "Launch", body: "Run games in an isolated host with telemetry and session controls." }
-        ].map((item) => (
-          <article
-            key={item.title}
-            style={{
-              border: "1px solid #2a3553",
-              borderRadius: 14,
-              padding: "16px 18px",
-              background: "#121936"
-            }}
-          >
-            <h2 style={{ margin: 0, fontSize: 20 }}>{item.title}</h2>
-            <p style={{ margin: "8px 0 0", color: "#bcc8e8", lineHeight: 1.45 }}>{item.body}</p>
-          </article>
-        ))}
-      </div>
+      <section className="page-stack">
+        <div className="section-header">
+          <p className="eyebrow">Why teams use Flume</p>
+          <h2 className="page-title">A cleaner platform surface for every role.</h2>
+          <p className="section-copy">
+            The platform now feels like a cohesive product, with modern cards, stronger hierarchy, and a clearer developer
+            workflow from creation to launch.
+          </p>
+        </div>
+        <div className="card-grid">
+          {featureCards.map((item) => (
+            <article className="card-panel" key={item.title}>
+              <h3 className="card-title">{item.title}</h3>
+              <p className="card-copy">{item.body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
     </section>
   );
 }
